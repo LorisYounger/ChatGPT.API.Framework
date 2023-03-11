@@ -14,9 +14,13 @@ namespace ChatGPT.API.Framework
     /// </summary>
     public class ChatGPTClient
     {
-        public ChatGPTClient(string aPIKey)
+        /// <summary>
+        /// Create a new Client
+        /// </summary>
+        public ChatGPTClient(string apikey, string apiurl = "https://api.openai.com/v1/chat/completions")
         {
-            APIKey = aPIKey;
+            APIKey = apikey;
+            APIUrl = apiurl;
         }
 
         public ChatGPTClient()
@@ -28,6 +32,10 @@ namespace ChatGPT.API.Framework
         /// YOUR_API_KEY
         /// </summary>
         public string APIKey { get; set; }
+        /// <summary>
+        /// ChatGPT API URL
+        /// </summary>
+        public string APIUrl { get; set; }
         /// <summary>
         /// Total Token Usage
         /// </summary>
@@ -68,11 +76,10 @@ namespace ChatGPT.API.Framework
             }
             cp.messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
 
-            var request = (HttpWebRequest)WebRequest.Create("https://api.openai.com/v1/chat/completions");
+            var request = (HttpWebRequest)WebRequest.Create(APIUrl);
             request.Method = "POST";
             request.ContentType = "application/json";//ContentType
             request.Headers.Add("Authorization", "Bearer " + APIKey);
-            var str = JsonConvert.SerializeObject(cp);
             byte[] byteData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(cp));
             int length = byteData.Length;
             request.ContentLength = length;
