@@ -1,4 +1,4 @@
-﻿using ChatGPT.API.Framework;
+using ChatGPT.API.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,21 +15,43 @@ namespace ChatGPT.API.Test
             Console.WriteLine("ChatGPT API Test");
             ChatGPTClient cgc;
             Console.WriteLine("APIKey: ");
+            string apiKey = Console.ReadLine();
+            Console.WriteLine("APIUrl (press Enter to use default):");
+            string apiUrl = Console.ReadLine();
+            if (string.IsNullOrEmpty(apiUrl))
+            {
+                cgc = new ChatGPTClient(apiKey);
+            }
+            else
+            {
+                cgc = new ChatGPTClient(apiKey, apiUrl);
+            }
             if (File.Exists(Environment.CurrentDirectory + @"\.save.tmp"))
             {
-                cgc = ChatGPTClient.Load(File.ReadAllText(Environment.CurrentDirectory + @"\.save.tmp"));
-                Console.WriteLine(cgc.APIKey);
-                Console.WriteLine("System Message: ");
-                Console.WriteLine(cgc.Completions["def"].messages[0].content);
-                for (int i = 1; i < cgc.Completions["def"].messages.Count; i++)
+                Console.WriteLine("Saved data found. Do you want to load it? (Y/N)");
+                string input = Console.ReadLine();
+                if (input.ToUpper() == "Y")
                 {
-                    Console.WriteLine(cgc.Completions["def"].messages[i].role.ToString() + " Message: ");
-                    Console.WriteLine(cgc.Completions["def"].messages[i].content);
+                    cgc = ChatGPTClient.Load(File.ReadAllText(Environment.CurrentDirectory + @"\.save.tmp"));
+                    Console.WriteLine(cgc.APIKey);
+                    Console.WriteLine("APIUrl (press Enter to use default):");
+                    Console.WriteLine(cgc.APIUrl);
+                    Console.WriteLine("System Message: ");
+                    Console.WriteLine(cgc.Completions["def"].messages[0].content);
+                    for (int i = 1; i < cgc.Completions["def"].messages.Count; i++)
+                    {
+                        Console.WriteLine(cgc.Completions["def"].messages[i].role.ToString() + " Message: ");
+                        Console.WriteLine(cgc.Completions["def"].messages[i].content);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("System Message: ");
+                    cgc.CreateCompletions("def", Console.ReadLine());
                 }
             }
             else
             {
-                cgc = new ChatGPTClient(Console.ReadLine());
                 Console.WriteLine("System Message: ");
                 cgc.CreateCompletions("def", Console.ReadLine());
             }
