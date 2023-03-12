@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,10 +17,14 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Create a new Client
         /// </summary>
-        public ChatGPTClient(string apikey, string apiurl = "https://api.openai.com/v1/chat/completions")
+        public ChatGPTClient(string apikey, string apiurl = "https://api.openai.com/")
         {
             APIKey = apikey;
-            APIUrl = apiurl;
+            if (!apiurl.EndsWith("/"))
+            {
+                apiurl += "/";
+            }
+            APIUrl = apiurl + "v1/chat/completions";
         }
 
         public ChatGPTClient()
