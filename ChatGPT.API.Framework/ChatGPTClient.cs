@@ -66,35 +66,19 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Ask ChatGPT
         /// </summary>
-        /// <returns></returns>
         public Response Ask(string id, string usermessage)
         {
             if (!Completions.TryGetValue(id, out Completions cp))
             {
-                cp = new Completions();
+                cp = new Completions()
+                {
+                    user = id
+                };
                 Completions.Add(id, cp);
             }
             cp.messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
 
-            var request = (HttpWebRequest)WebRequest.Create(APIUrl);
-            request.Method = "POST";
-            request.ContentType = "application/json";//ContentType
-            request.Headers.Add("Authorization", "Bearer " + APIKey);
-            byte[] byteData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(cp));
-            int length = byteData.Length;
-            request.ContentLength = length;
-            using (Stream writer = request.GetRequestStream())
-            {
-                writer.Write(byteData, 0, length);
-                writer.Close();
-            }
-            string responseString;
-            using (var response = (HttpWebResponse)request.GetResponse())
-            {
-                responseString = new StreamReader(response.GetResponseStream(), Encoding.UTF8).ReadToEnd();
-            }
-            var rs = JsonConvert.DeserializeObject<Response>(responseString);
-            cp.messages.Add(rs.GetMessage());
+            var rs = cp.Ask(usermessage, APIUrl, APIKey);
             TotalTokensUsage += rs.usage.total_tokens;
             return rs;
         }

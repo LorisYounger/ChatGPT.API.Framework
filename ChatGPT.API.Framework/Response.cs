@@ -32,7 +32,7 @@ namespace ChatGPT.API.Framework
             public string finish_reason;
         }
         /// <summary>
-        /// Get Response Message
+        /// Get Response Message String
         /// </summary>
         public string GetMessageContent() => choices[0].message.content;
         /// <summary>
