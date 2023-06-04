@@ -76,8 +76,6 @@ namespace ChatGPT.API.Framework
                 };
                 Completions.Add(id, cp);
             }
-            cp.messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
-
             var rs = cp.Ask(usermessage, APIUrl, APIKey);
             TotalTokensUsage += rs.usage.total_tokens;
             return rs;
