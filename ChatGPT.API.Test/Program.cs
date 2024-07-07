@@ -35,6 +35,10 @@ namespace ChatGPT.API.Test
             }
             while (true)
             {
+                if (cgc.Completions["def"].messages.Last().role == Message.RoleType.user)
+                {
+                    Console.WriteLine("System Message: \n" + cgc.Completions["def"].GetResponse(cgc.APIUrl, cgc.APIKey).GetMessageContent());
+                }
                 Console.WriteLine("User Message: ");
                 var rl = Console.ReadLine();
                 if (rl == "exit")

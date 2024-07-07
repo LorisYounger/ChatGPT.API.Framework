@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,10 +18,25 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Create a new Client
         /// </summary>
-        public ChatGPTClient(string apikey, string apiurl = "https://api.openai.com/v1/chat/completions")
+        public ChatGPTClient(string apikey, string apiurl = "https://api.openai.com/v1/chat/completions", HttpMessageHandler proxy = null)
         {
             APIKey = apikey;
             APIUrl = apiurl;
+            Proxy = proxy;
+        }
+        /// <summary>
+        /// Create a new Client
+        /// </summary>
+        public ChatGPTClient(string apikey, string apiurl, string webproxy)
+        {
+            APIKey = apikey;
+            APIUrl = apiurl;
+            if (!string.IsNullOrWhiteSpace(webproxy))
+                Proxy = new HttpClientHandler()
+                {
+                    Proxy = new WebProxy(webproxy),
+                    UseProxy = true
+                };
         }
 
         public ChatGPTClient()
@@ -66,7 +82,15 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Ask ChatGPT
         /// </summary>
-        public Response Ask(string id, string usermessage)
+        public Response Ask(string id, string usermessage) => Ask_async(id, usermessage).Result;
+        /// <summary>
+        /// Proxy Handler
+        /// </summary>
+        public HttpMessageHandler Proxy { get; set; } = null;
+        /// <summary>
+        /// Ask ChatGPT
+        /// </summary>
+        public async Task<Response> Ask_async(string id, string usermessage)
         {
             if (!Completions.TryGetValue(id, out Completions cp))
             {
@@ -76,7 +100,7 @@ namespace ChatGPT.API.Framework
                 };
                 Completions.Add(id, cp);
             }
-            var rs = cp.Ask(usermessage, APIUrl, APIKey);
+            var rs = await cp.Ask_async(usermessage, APIUrl, APIKey, Proxy);
             TotalTokensUsage += rs.usage.total_tokens;
             return rs;
         }

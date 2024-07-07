@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Runtime;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,15 +19,10 @@ namespace ChatGPT.API.Framework
         public static class Model
         {
             public const string GPT_4 = "gpt-4";
-            public const string GPT_40_0314 = "gpt-4-0314";
-            public const string GPT_40_32k = "gpt-4-32k";
-            public const string GPT_40_32k_0314 = "gpt-4-32k-0314";
             public const string GPT_35_turbo = "gpt-3.5-turbo";
-            public const string GPT_35_turbo_0301 = "gpt-3.5-turbo-0301";
         }
         /// <summary>
         /// ID of the model to use.
-        /// gpt-4, gpt-4-0314, gpt-4-32k, gpt-4-32k-0314, gpt-3.5-turbo, gpt-3.5-turbo-0301
         /// </summary>
         public string model { get; set; } = Model.GPT_35_turbo;
         /// <summary>
@@ -67,36 +63,35 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Get Response
         /// </summary>
-        public Response GetResponse(string APIUrl, string APIKey)
+        public Response GetResponse(string APIUrl, string APIKey, HttpMessageHandler Proxy = null) => GetResponse_async(APIUrl, APIKey, Proxy).Result;
+        /// <summary>
+        /// Get Response
+        /// </summary>
+        public async Task<Response> GetResponse_async(string APIUrl, string APIKey, HttpMessageHandler Proxy = null)
         {
-            var request = (HttpWebRequest)WebRequest.Create(APIUrl);
-            request.Method = "POST";
-            request.ContentType = "application/json";//ContentType
-            request.Headers.Add("Authorization", "Bearer " + APIKey);
-            byte[] byteData = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
-            int length = byteData.Length;
-            request.ContentLength = length;
-            using (Stream writer = request.GetRequestStream())
+            using (var httpClient = Proxy == null ? new HttpClient() : new HttpClient(Proxy))
             {
-                writer.Write(byteData, 0, length);
-                writer.Close();
+                httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
+                var content = new StringContent(JsonConvert.SerializeObject(this), Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync(APIUrl, content);
+                var responseString = await response.Content.ReadAsStringAsync();
+                var rs = JsonConvert.DeserializeObject<Response>(responseString);
+                messages.Add(rs.GetMessage());
+                return rs;
             }
-            string responseString;
-            using (var response = (HttpWebResponse)request.GetResponse())
-            {
-                responseString = new StreamReader(response.GetResponseStream(), Encoding.UTF8).ReadToEnd();
-            }
-            var rs = JsonConvert.DeserializeObject<Response>(responseString);
-            messages.Add(rs.GetMessage());
-            return rs;
         }
         /// <summary>
         /// Ask and Get Response
         /// </summary>
-        public Response Ask(string usermessage, string APIUrl, string APIKey)
+        public Response Ask(string usermessage, string APIUrl, string APIKey) => Ask_async(usermessage, APIUrl, APIKey).Result;
+       
+        /// <summary>
+        /// Ask and Get Response
+        /// </summary>
+        public async Task<Response> Ask_async(string usermessage, string APIUrl, string APIKey, HttpMessageHandler Proxy = null)
         {
             messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
-            return GetResponse(APIUrl, APIKey);
+            return await GetResponse_async(APIUrl, APIKey, Proxy);
         }
     }
 }
