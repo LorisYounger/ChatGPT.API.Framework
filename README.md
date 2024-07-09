@@ -1,6 +1,6 @@
 # ChatGPT.API.Framework
-This is the only .Net Framework ChatGPT API You Can use.
-你(目前)唯一能在.Net Framework中的ChatGPT API [中文版本文档](#如何使用)
+This is the only(before) .Net Framework ChatGPT API You Can use.
+你(以前)唯一能在.Net Framework中的ChatGPT API [中文版本文档](#如何使用)
 
 ## How To Use
 
@@ -21,6 +21,22 @@ cgc.Ask("Store-History-ID", "Hi ChatGPT").GetMessageContent();
 ```C#
 cgc.CreateCompletions("Store-History-ID", "System Message");
 cgc.Ask("Store-History-ID", "Hi ChatGPT");
+```
+
+### Return data using streaming
+
+```C#
+cgc.Ask_stream("Store-History-ID", "Hi ChatGPT", (x) =>
+{
+    if (!string.IsNullOrEmpty(x.GetDeltaContent()))
+    {
+        Console.Write(x.choices[0].delta.content);
+    }
+    else if (x.GetDelta()?.finish_reason != null)
+    {
+        Console.WriteLine("\n---" + x.choices[0].delta.finish_reason + "---\n");
+    }
+});
 ```
 
 Also Can see Demo at `ChatGPT.API.Test`
@@ -64,6 +80,24 @@ cgc.Ask("储存历史用的id", "你好 ChatGPT").GetMessageContent();
 cgc.CreateCompletions("储存历史用的id", "你是个可爱的桌宠,请用可爱的语气和我说话");
 cgc.Ask("储存历史用的id", "你好,桌宠");
 ```
+
+### 使用流式传输返回数据
+
+```C#
+cgc.Ask_stream("储存历史用的id", "你好,桌宠", (x) =>
+{
+    if (!string.IsNullOrEmpty(x.GetDeltaContent()))
+    {
+        Console.Write(x.GetDeltaContent());
+    }
+    else if (x.GetDelta()?.finish_reason != null)
+    {
+        Console.WriteLine("\n---" + x.GetDelta().delta.finish_reason + "---\n");
+    }
+});
+```
+
+
 
 具体案例可以参见 `ChatGPT.API.Test`
 

@@ -32,11 +32,14 @@ namespace ChatGPT.API.Framework
             APIKey = apikey;
             APIUrl = apiurl;
             if (!string.IsNullOrWhiteSpace(webproxy))
+            {
+                WebProxy = webproxy;
                 Proxy = new HttpClientHandler()
                 {
                     Proxy = new WebProxy(webproxy),
                     UseProxy = true
                 };
+            }
         }
 
         public ChatGPTClient()
@@ -68,7 +71,19 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Load from Json
         /// </summary>
-        public static ChatGPTClient Load(string json) => JsonConvert.DeserializeObject<ChatGPTClient>(json);
+        public static ChatGPTClient Load(string json)
+        {
+            var cgc = JsonConvert.DeserializeObject<ChatGPTClient>(json);
+            if (cgc.WebProxy != null)
+            {
+                cgc.Proxy = new HttpClientHandler()
+                {
+                    Proxy = new WebProxy(cgc.WebProxy),
+                    UseProxy = true
+                };
+            }
+            return cgc;
+        }
         /// <summary>
         /// Create A new Chat Completions
         /// </summary>
@@ -86,7 +101,11 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Proxy Handler
         /// </summary>
-        public HttpMessageHandler Proxy { get; set; } = null;
+        [JsonIgnore] public HttpMessageHandler Proxy { get; set; } = null;
+        /// <summary>
+        /// WebProxy url
+        /// </summary>
+        public string WebProxy { get; set; } = null;
         /// <summary>
         /// Ask ChatGPT
         /// </summary>
@@ -103,6 +122,19 @@ namespace ChatGPT.API.Framework
             var rs = await cp.Ask_async(usermessage, APIUrl, APIKey, Proxy);
             TotalTokensUsage += rs.usage.total_tokens;
             return rs;
+        }
+
+        public void Ask_stream(string id, string usermessage, Action<Response_Stream> Response)
+        {
+            if (!Completions.TryGetValue(id, out Completions cp))
+            {
+                cp = new Completions()
+                {
+                    user = id
+                };
+                Completions.Add(id, cp);
+            }
+            cp.Ask_stream(usermessage, APIUrl, APIKey, Response);
         }
     }
 }

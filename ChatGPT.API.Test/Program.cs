@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ChatGPT.API.Test
@@ -33,20 +34,40 @@ namespace ChatGPT.API.Test
                 Console.WriteLine("System Message: ");
                 cgc.CreateCompletions("def", Console.ReadLine());
             }
-            while (true)
+            if (cgc.Completions["def"].messages.Last().role == Message.RoleType.user)
             {
-                if (cgc.Completions["def"].messages.Last().role == Message.RoleType.user)
+                Console.WriteLine("System Message: \n" + cgc.Completions["def"].GetResponse(cgc.APIUrl, cgc.APIKey).GetMessageContent());
+            }
+            AskLoop(cgc);
+        }
+        public static void AskLoop(ChatGPTClient cgc)
+        {
+            Console.WriteLine("User Message: ");
+            var rl = Console.ReadLine();
+            if (rl == "exit")
+            {
+                File.WriteAllText(Environment.CurrentDirectory + @"\.save.tmp", cgc.Save());
+                return;
+            }
+            Console.WriteLine("System Message:"); //Type1: cgc.Ask("def", rl).GetMessageContent();
+                                                  //Type2:
+            bool cannotnext = true;//防止问问题的时候自动退出控制台
+            cgc.Ask_stream("def", rl, (x) =>
+            {
+                if (!string.IsNullOrEmpty(x.GetDeltaContent()))
                 {
-                    Console.WriteLine("System Message: \n" + cgc.Completions["def"].GetResponse(cgc.APIUrl, cgc.APIKey).GetMessageContent());
+                    Console.Write(x.GetDeltaContent());
                 }
-                Console.WriteLine("User Message: ");
-                var rl = Console.ReadLine();
-                if (rl == "exit")
+                else if (x.GetDelta()?.finish_reason != null)
                 {
-                    File.WriteAllText(Environment.CurrentDirectory + @"\.save.tmp", cgc.Save());
-                    return;
+                    Console.WriteLine("\n---" + x.choices[0].delta.finish_reason + "---\n");
+                    AskLoop(cgc);
+                    cannotnext = false;
                 }
-                Console.WriteLine("System Message: \n" + cgc.Ask("def", rl).GetMessageContent());
+            });
+            while (cannotnext)
+            {
+                Thread.Sleep(1000);
             }
         }
     }
