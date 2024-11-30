@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+//using System.Threading.Tasks;
 
 namespace ChatGPT.API.Test
 {
@@ -38,9 +38,59 @@ namespace ChatGPT.API.Test
             {
                 Console.WriteLine("System Message: \n" + cgc.Completions["def"].GetResponse(cgc.APIUrl, cgc.APIKey).GetMessageContent());
             }
-            AskLoop(cgc);
+            Console.WriteLine("\nChoose Mode:");
+            Console.WriteLine("1. GPT Ask");
+            Console.WriteLine("2. GPT Stream Ask");
+            Console.WriteLine("3. Moderations");
+
+            switch (Console.ReadLine())
+            {
+                case "1":
+                    AskLoop(cgc);
+                    break;
+                case "2":
+                    StreamAskLoop(cgc);
+                    break;
+                case "3":
+                    ModerationsLoop(cgc);
+                    break;
+            }
         }
+        public static void ModerationsLoop(ChatGPTClient cgc)
+        {
+            while (true)
+            {
+                Console.WriteLine("User Message: ");
+                var rl = Console.ReadLine();
+                if (rl == "exit")
+                {
+                    File.WriteAllText(Environment.CurrentDirectory + @"\.save.tmp", cgc.Save());
+                    return;
+                }
+                Console.WriteLine("System Message: \n" + string.Join(".", cgc.Moderation_async(rl).Result.FlaggedReason));
+            }
+        }
+
         public static void AskLoop(ChatGPTClient cgc)
+        {
+            while (true)
+            {
+                if (cgc.Completions["def"].messages.Last().role == Message.RoleType.user)
+                {
+                    Console.WriteLine("System Message: \n" + cgc.Completions["def"].GetResponse(cgc.APIUrl, cgc.APIKey).GetMessageContent());
+                }
+                Console.WriteLine("User Message: ");
+                var rl = Console.ReadLine();
+                if (rl == "exit")
+                {
+                    File.WriteAllText(Environment.CurrentDirectory + @"\.save.tmp", cgc.Save());
+                    return;
+                }
+                Console.WriteLine("System Message: \n" + cgc.Ask("def", rl).GetMessageContent());
+            }
+        }
+
+        public static void StreamAskLoop(ChatGPTClient cgc)
         {
             Console.WriteLine("User Message: ");
             var rl = Console.ReadLine();

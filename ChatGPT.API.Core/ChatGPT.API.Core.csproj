@@ -21,6 +21,7 @@
       <Compile Include="..\ChatGPT.API.Framework\Message.cs" />
       <Compile Include="..\ChatGPT.API.Framework\Response.cs" />
       <Compile Include="..\ChatGPT.API.Framework\ChatGPTClient.cs" />
+      <Compile Include="..\ChatGPT.API.Framework\Moderations.cs" />
   </ItemGroup>
     <ItemGroup>
       <None Include="..\LICENSE">

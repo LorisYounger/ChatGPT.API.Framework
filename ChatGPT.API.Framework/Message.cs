@@ -24,6 +24,6 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Content
         /// </summary>
-        public string content;
+        public string content = string.Empty;
     }
 }

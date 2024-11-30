@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Runtime;
 using System.Text;
 using System.Threading.Tasks;
+using static ChatGPT.API.Framework.Moderations;
 using static ChatGPT.API.Framework.Response_Stream.Choices;
 
 namespace ChatGPT.API.Framework
@@ -23,11 +24,14 @@ namespace ChatGPT.API.Framework
             public const string GPT_4_turbo = "gpt-4-turbo";
             public const string GPT_35_turbo = "gpt-3.5-turbo";
             public const string GPT_4o = "gpt-4o";
+            public const string GPT_4o_mini = "gpt-4o-mini";
+            public const string o1_preview = "o1-preview";
+            public const string o1_mini = "o1-mini";
         }
         /// <summary>
         /// ID of the model to use.
         /// </summary>
-        public string model { get; set; } = Model.GPT_35_turbo;
+        public string model { get; set; } = Model.GPT_4o_mini;
         /// <summary>
         /// What sampling temperature to use, between 0 and 2. 
         /// Higher values like 0.8 will make the output more random, 
@@ -67,14 +71,15 @@ namespace ChatGPT.API.Framework
         /// If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as data-only server-sent events as they become available
         /// </summary>
         [JsonProperty] private bool stream { get; set; } = false;
+#nullable enable
         /// <summary>
         /// Get Response
         /// </summary>
-        public Response GetResponse(string APIUrl, string APIKey, HttpMessageHandler Proxy = null) => GetResponse_async(APIUrl, APIKey, Proxy).Result;
+        public Response? GetResponse(string APIUrl, string APIKey, HttpMessageHandler? Proxy = null) => GetResponse_async(APIUrl, APIKey, Proxy).Result;
         /// <summary>
         /// Get Response
         /// </summary>
-        public async Task<Response> GetResponse_async(string APIUrl, string APIKey, HttpMessageHandler Proxy = null)
+        public async Task<Response?> GetResponse_async(string APIUrl, string APIKey, HttpMessageHandler? Proxy = null)
         {
             this.stream = false;
             using (var httpClient = Proxy == null ? new HttpClient() : new HttpClient(Proxy))
@@ -84,14 +89,17 @@ namespace ChatGPT.API.Framework
                 var response = await httpClient.PostAsync(APIUrl, content);
                 var responseString = await response.Content.ReadAsStringAsync();
                 var rs = JsonConvert.DeserializeObject<Response>(responseString);
-                messages.Add(rs.GetMessage());
+                var msg = rs?.GetMessage();
+                if (msg != null)
+                    messages.Add(msg);
                 return rs;
             }
         }
+#nullable enable
         /// <summary>
         /// Get Response by Stream
         /// </summary>
-        public async void GetResponse_stream(string APIUrl, string APIKey, Action<Response_Stream> Response, HttpMessageHandler Proxy = null)
+        public async void GetResponse_stream(string APIUrl, string APIKey, Action<Response_Stream?> Response, HttpMessageHandler? Proxy = null)
         {
             this.stream = true;
             Message FakeMessage = new Message() { role = Message.RoleType.assistant, content = "" };
@@ -108,7 +116,9 @@ namespace ChatGPT.API.Framework
                         {
                             while (!reader.EndOfStream)
                             {
-                                string responseString = await reader.ReadLineAsync();
+                                string? responseString = await reader.ReadLineAsync();
+                                if (responseString == null)
+                                    continue;
                                 if (responseString.StartsWith("data: "))
                                     responseString = responseString.Substring(6);
                                 if (string.IsNullOrEmpty(responseString))
@@ -119,15 +129,18 @@ namespace ChatGPT.API.Framework
                                     break;
                                 var rs = JsonConvert.DeserializeObject<Response_Stream>(responseString);
                                 Response(rs);
-                                if (rs.choices.FirstOrDefault()?.delta?.role != null)
+                                if (rs?.choices.FirstOrDefault()?.delta?.role != null)
                                 {
+#pragma warning disable CS8629,CS8602 // 可为 null 的值类型可为 null。
                                     FakeMessage.role = rs.choices.FirstOrDefault().delta.role.Value;
                                 }
-                                if (string.IsNullOrEmpty(rs.choices.FirstOrDefault()?.delta?.content) == false)
+                                if (string.IsNullOrEmpty(rs?.choices.FirstOrDefault()?.delta?.content) == false)
                                 {
                                     FakeMessage.content += rs.choices.FirstOrDefault().delta.content;
+#pragma warning restore CS8629,CS8602 // 可为 null 的值类型可为 null。
                                 }
                             }
+                            Response(null);
                         }
                     }
                 }
@@ -142,18 +155,18 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Ask and Get Response
         /// </summary>
-        public Response Ask(string usermessage, string APIUrl, string APIKey) => Ask_async(usermessage, APIUrl, APIKey).Result;
+        public Response? Ask(string usermessage, string APIUrl, string APIKey) => Ask_async(usermessage, APIUrl, APIKey).Result;
 
         /// <summary>
         /// Ask and Get Response
         /// </summary>
-        public async Task<Response> Ask_async(string usermessage, string APIUrl, string APIKey, HttpMessageHandler Proxy = null)
+        public async Task<Response?> Ask_async(string usermessage, string APIUrl, string APIKey, HttpMessageHandler? Proxy = null)
         {
             messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
             return await GetResponse_async(APIUrl, APIKey, Proxy);
         }
 
-        public void Ask_stream(string usermessage, string APIUrl, string APIKey, Action<Response_Stream> Response, HttpMessageHandler Proxy = null)
+        public void Ask_stream(string usermessage, string APIUrl, string APIKey, Action<Response_Stream?> Response, HttpMessageHandler? Proxy = null)
         {
             messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
             GetResponse_stream(APIUrl, APIKey, Response, Proxy);
