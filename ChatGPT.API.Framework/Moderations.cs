@@ -45,17 +45,17 @@ namespace ChatGPT.API.Framework
             /// <summary>
             /// 审查请求的唯一标识符。
             /// </summary>
-            public string id { get; set; }
+            public string id { get; set; } = "";
 
             /// <summary>
             /// 用于生成审查结果的模型名称。
             /// </summary>
-            public string model { get; set; }
+            public string model { get; set; } = "";
 
             /// <summary>
             /// 审查结果的列表，包含一个或多个结果对象。
             /// </summary>
-            public List<Result> results { get; set; }
+            public List<Result> results { get; set; } = new List<Result>();
             /// <summary>
             /// 所有结果是否有内容被标记
             /// </summary>

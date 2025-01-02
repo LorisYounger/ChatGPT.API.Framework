@@ -67,6 +67,12 @@ namespace ChatGPT.API.Framework
         public Dictionary<string, Completions> Completions { get; set; } = new Dictionary<string, Completions>();
 
         /// <summary>
+        /// Default Model 
+        /// </summary>
+        public string DefaultModel = Framework.Completions.Model.GPT_4o_mini;
+
+
+        /// <summary>
         /// Save as Json
         /// </summary>
         public string Save() => JsonConvert.SerializeObject(this);
@@ -91,7 +97,11 @@ namespace ChatGPT.API.Framework
         /// </summary>
         public Completions CreateCompletions(string id, string systemmessages)
         {
-            var cp = new Completions();
+            var cp = new Completions()
+            {
+                model = DefaultModel,
+                user = id,
+            };
             cp.messages.Add(new Message() { role = Message.RoleType.system, content = systemmessages });
             Completions.Add(id, cp);
             return cp;
