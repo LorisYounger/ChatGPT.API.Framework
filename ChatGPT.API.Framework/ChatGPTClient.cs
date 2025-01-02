@@ -76,9 +76,9 @@ namespace ChatGPT.API.Framework
         public static ChatGPTClient? Load(string json)
         {
             var cgc = JsonConvert.DeserializeObject<ChatGPTClient>(json);
-            if (cgc?.WebProxy != null)
+            if (!string.IsNullOrWhiteSpace(cgc?.WebProxy))
             {
-                cgc.Proxy = new HttpClientHandler()
+                cgc!.Proxy = new HttpClientHandler()
                 {
                     Proxy = new WebProxy(cgc.WebProxy),
                     UseProxy = true
