@@ -92,7 +92,6 @@ namespace ChatGPT.API.Framework
             {
                 httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
                 var content = new StringContent(JsonConvert.SerializeObject(this), Encoding.UTF8, "application/json");
-                Console.WriteLine(JsonConvert.SerializeObject(this));
                 var response = await httpClient.PostAsync(APIUrl, content);
                 var responseString = await response.Content.ReadAsStringAsync();
                 var rs = JsonConvert.DeserializeObject<Response>(responseString);
