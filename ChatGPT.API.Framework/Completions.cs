@@ -38,23 +38,27 @@ namespace ChatGPT.API.Framework
         /// while lower values like 0.2 will make it more focused and deterministic.
         /// </summary>
         public double temperature { get; set; } = 1;
+        public bool ShouldSerializetemperature() => temperature != 1;
         /// <summary>
         /// The maximum number of tokens allowed for the generated answer. 
         /// By default, the number of tokens the model can return will be (4096 - prompt tokens).
         /// </summary>
         public int max_tokens { get; set; } = 2048;
+        public bool ShouldSerializemax_tokens() => max_tokens != 2048;
         /// <summary>
         /// Number between -2.0 and 2.0. 
         /// Positive values penalize new tokens based on whether they appear in the text so far
         /// increasing the model's likelihood to talk about new topics.
         /// </summary>
         public double presence_penalty { get; set; } = 0;
+        public bool ShouldSerializepresence_penalty() => presence_penalty != 0;
         /// <summary>
         /// Number between -2.0 and 2.0. 
         /// Positive values penalize new tokens based on their existing frequency in the text so far
         /// decreasing the model's likelihood to repeat the same line verbatim
         /// </summary>
         public double frequency_penalty { get; set; } = 0;
+        public bool ShouldSerializefrequency_penalty() => frequency_penalty != 0;
         /// <summary>
         /// The messages to generate chat completions for
         /// </summary>
@@ -63,10 +67,12 @@ namespace ChatGPT.API.Framework
         /// How many chat completion choices to generate for each input message.
         /// </summary>
         public int n { get; set; } = 1;
+        public bool ShouldSerializen() => n != 1;
         /// <summary>
         /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse
         /// </summary>
         public string user { get; set; } = "default";
+        public bool ShouldSerializeuser() => user != "default";
         /// <summary>
         /// If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as data-only server-sent events as they become available
         /// </summary>
