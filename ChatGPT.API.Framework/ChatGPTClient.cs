@@ -18,9 +18,13 @@ namespace ChatGPT.API.Framework
     public class ChatGPTClient
     {
         /// <summary>
+        /// Json Serializer Settings
+        /// </summary>
+        public static JsonSerializerSettings JsonSerializerSettings { get; set; } = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore };
+        /// <summary>
         /// Create a new Client
         /// </summary>
-        public ChatGPTClient(string apikey, string apiurl = "https://api.openai.com/v1/chat/completions", HttpMessageHandler? proxy = null)
+        public ChatGPTClient(string apikey, string apiurl = TestedModel.OpenAI.APIUrl, HttpMessageHandler? proxy = null)
         {
             APIKey = apikey;
             APIUrl = apiurl;
@@ -66,16 +70,25 @@ namespace ChatGPT.API.Framework
         /// </summary>
         public Dictionary<string, Completions> Completions { get; set; } = new Dictionary<string, Completions>();
 
+
+
+        public Completions DefaultCompletion = new()
+        {
+            model = TestedModel.OpenAI.GPT_4o_mini
+        };
+
         /// <summary>
         /// Default Model 
         /// </summary>
-        public string DefaultModel = Framework.Completions.Model.GPT_4o_mini;
-
-
+        public string? DefaultModel
+        {
+            get => DefaultCompletion.model;
+            set => DefaultCompletion.model = value;
+        }
         /// <summary>
         /// Save as Json
         /// </summary>
-        public string Save() => JsonConvert.SerializeObject(this);
+        public string Save() => JsonConvert.SerializeObject(this, JsonSerializerSettings);
         /// <summary>
         /// Load from Json
         /// </summary>
@@ -99,8 +112,13 @@ namespace ChatGPT.API.Framework
         {
             var cp = new Completions()
             {
-                model = DefaultModel,
-                user = id,
+                model = DefaultCompletion.model,
+                user = DefaultCompletion.user == "default" ? id : DefaultCompletion.user,
+                temperature = DefaultCompletion.temperature,
+                max_tokens = DefaultCompletion.max_tokens,
+                presence_penalty = DefaultCompletion.presence_penalty,
+                frequency_penalty = DefaultCompletion.frequency_penalty,
+                n = DefaultCompletion.n
             };
             cp.messages.Add(new Message() { role = Message.RoleType.system, content = systemmessages });
             Completions.Add(id, cp);
@@ -127,7 +145,13 @@ namespace ChatGPT.API.Framework
             {
                 cp = new Completions()
                 {
-                    user = id
+                    model = DefaultCompletion.model,
+                    user = DefaultCompletion.user == "default" ? id : DefaultCompletion.user,
+                    temperature = DefaultCompletion.temperature,
+                    max_tokens = DefaultCompletion.max_tokens,
+                    presence_penalty = DefaultCompletion.presence_penalty,
+                    frequency_penalty = DefaultCompletion.frequency_penalty,
+                    n = DefaultCompletion.n
                 };
                 Completions.Add(id, cp);
             }
@@ -143,7 +167,13 @@ namespace ChatGPT.API.Framework
             {
                 cp = new Completions()
                 {
-                    user = id
+                    model = DefaultCompletion.model,
+                    user = DefaultCompletion.user == "default" ? id : DefaultCompletion.user,
+                    temperature = DefaultCompletion.temperature,
+                    max_tokens = DefaultCompletion.max_tokens,
+                    presence_penalty = DefaultCompletion.presence_penalty,
+                    frequency_penalty = DefaultCompletion.frequency_penalty,
+                    n = DefaultCompletion.n
                 };
                 Completions.Add(id, cp);
             }

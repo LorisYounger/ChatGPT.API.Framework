@@ -2,6 +2,19 @@
 This is the only(before) .Net Framework ChatGPT API You Can use.
 你(以前)唯一能在.Net Framework中的ChatGPT API [中文版本文档](#如何使用)
 
+### 经过测试支持以下平台的模型
+
+### Tested models that support the following platforms
+
+* OpenAI (ChatGPT-3.5/4/4o/4o-mini/...) https://openai.com/
+  * APIURL: https://api.deepseek.com/v1/chat/completions
+* 智谱AI (GLM-4/Plus/Air/Flash/..) https://open.bigmodel.cn/
+  * APIURL: https://open.bigmodel.cn/api/paas/v4/chat/completions
+* Deepseek (deepseek-reasoner/chat) https://deepseek.com/
+  * APIURL: https://api.deepseek.com/v1/chat/completions
+* Google Gemini (gemini-2.0-flash/../gemini-1.5-pro/flash/..)
+  * APIURL: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+
 ## How To Use
 
 ### Create Client

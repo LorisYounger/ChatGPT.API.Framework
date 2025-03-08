@@ -12,13 +12,13 @@ namespace ChatGPT.API.Framework
 {
 #nullable enable
     /// <summary>
-    /// 审查类
+    /// 审查类 (OpenAI Only)
     /// </summary>
     public class Moderations
     {
 
         /// <summary>
-        /// 调用审查API的模型 (免费)
+        /// 调用审查API的模型 (免费) (OpenAI Only)
         /// </summary>
         /// <param name="text">文本</param>
         /// <param name="APIUrl">审查模型链接地址</param>
@@ -30,7 +30,7 @@ namespace ChatGPT.API.Framework
             using (var httpClient = Proxy == null ? new HttpClient() : new HttpClient(Proxy))
             {
                 httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
-                var content = new StringContent(JsonConvert.SerializeObject(new { input = texts }), Encoding.UTF8, "application/json");
+                var content = new StringContent(JsonConvert.SerializeObject(new { input = texts }, ChatGPTClient.JsonSerializerSettings), Encoding.UTF8, "application/json");
                 var response = await httpClient.PostAsync(APIUrl, content);
                 var responseString = await response.Content.ReadAsStringAsync();
                 return JsonConvert.DeserializeObject<ModerationResponse>(responseString) ?? throw new Exception("Empty Response");

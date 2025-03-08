@@ -13,52 +13,39 @@ using static ChatGPT.API.Framework.Response_Stream.Choices;
 
 namespace ChatGPT.API.Framework
 {
+#nullable enable
     /// <summary>
     /// a completion for the chat message
     /// </summary>
     public class Completions
     {
-        public static class Model
-        {
-            public const string GPT_4 = "gpt-4";
-            public const string GPT_4_turbo = "gpt-4-turbo";
-            public const string GPT_35_turbo = "gpt-3.5-turbo";
-            public const string GPT_4o = "gpt-4o";
-            public const string GPT_4o_mini = "gpt-4o-mini";
-            public const string o1_preview = "o1-preview";
-            public const string o1_mini = "o1-mini";
-        }
         /// <summary>
         /// ID of the model to use.
         /// </summary>
-        public string model { get; set; } = Model.GPT_4o_mini;
+        public string? model { get; set; } = TestedModel.OpenAI.GPT_4o_mini;
         /// <summary>
         /// What sampling temperature to use, between 0 and 2. 
         /// Higher values like 0.8 will make the output more random, 
         /// while lower values like 0.2 will make it more focused and deterministic.
         /// </summary>
-        public double temperature { get; set; } = 1;
-        public bool ShouldSerializetemperature() => temperature != 1;
+        public double? temperature { get; set; } = 1;
         /// <summary>
         /// The maximum number of tokens allowed for the generated answer. 
         /// By default, the number of tokens the model can return will be (4096 - prompt tokens).
         /// </summary>
-        public int max_tokens { get; set; } = 2048;
-        public bool ShouldSerializemax_tokens() => max_tokens != 2048;
+        public int? max_tokens { get; set; } = 2048;
         /// <summary>
         /// Number between -2.0 and 2.0. 
         /// Positive values penalize new tokens based on whether they appear in the text so far
         /// increasing the model's likelihood to talk about new topics.
         /// </summary>
-        public double presence_penalty { get; set; } = 0;
-        public bool ShouldSerializepresence_penalty() => presence_penalty != 0;
+        public double? presence_penalty { get; set; } = 0;
         /// <summary>
         /// Number between -2.0 and 2.0. 
         /// Positive values penalize new tokens based on their existing frequency in the text so far
         /// decreasing the model's likelihood to repeat the same line verbatim
         /// </summary>
-        public double frequency_penalty { get; set; } = 0;
-        public bool ShouldSerializefrequency_penalty() => frequency_penalty != 0;
+        public double? frequency_penalty { get; set; } = 0;
         /// <summary>
         /// The messages to generate chat completions for
         /// </summary>
@@ -66,18 +53,16 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// How many chat completion choices to generate for each input message.
         /// </summary>
-        public int n { get; set; } = 1;
-        public bool ShouldSerializen() => n != 1;
+        public int? n { get; set; } = 1;
         /// <summary>
         /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse
         /// </summary>
-        public string user { get; set; } = "default";
-        public bool ShouldSerializeuser() => user != "default";
+        public string? user { get; set; } = "default";
         /// <summary>
         /// If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as data-only server-sent events as they become available
         /// </summary>
         [JsonProperty] private bool stream { get; set; } = false;
-#nullable enable
+
         /// <summary>
         /// Get Response
         /// </summary>
@@ -91,7 +76,7 @@ namespace ChatGPT.API.Framework
             using (var httpClient = Proxy == null ? new HttpClient() : new HttpClient(Proxy))
             {
                 httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
-                var content = new StringContent(JsonConvert.SerializeObject(this), Encoding.UTF8, "application/json");
+                var content = new StringContent(JsonConvert.SerializeObject(this, ChatGPTClient.JsonSerializerSettings), Encoding.UTF8, "application/json");
                 var response = await httpClient.PostAsync(APIUrl, content);
                 var responseString = await response.Content.ReadAsStringAsync();
                 var rs = JsonConvert.DeserializeObject<Response>(responseString);
@@ -112,7 +97,7 @@ namespace ChatGPT.API.Framework
             using (var httpClient = Proxy == null ? new HttpClient() : new HttpClient(Proxy))
             {
                 httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
-                var content = new StringContent(JsonConvert.SerializeObject(this), Encoding.UTF8, "application/json");
+                var content = new StringContent(JsonConvert.SerializeObject(this, ChatGPTClient.JsonSerializerSettings), Encoding.UTF8, "application/json");
                 var response = await httpClient.PostAsync(APIUrl, content);
                 if (response.IsSuccessStatusCode)
                 {
