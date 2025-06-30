@@ -157,10 +157,18 @@ namespace ChatGPT.API.Framework
             return await GetResponse_async(APIUrl, APIKey, Proxy);
         }
 
+        /// <summary>
+        /// Sends a user message to the API and processes the response stream asynchronously.
+        /// </summary>
+        /// <param name="usermessage">The message from the user to send to the API.</param>
+        /// <param name="APIUrl">The URL of the API endpoint.</param>
+        /// <param name="APIKey">The API key for authentication.</param>
+        /// <param name="Response">An action to handle the streamed response.</param>
+        /// <param name="Proxy">Optional HTTP message handler for proxy configuration.</param>
         public void Ask_stream(string usermessage, string APIUrl, string APIKey, Action<Response_Stream?> Response, HttpMessageHandler? Proxy = null)
         {
             messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
             GetResponse_stream(APIUrl, APIKey, Response, Proxy);
-        }
+        }
     }
 }

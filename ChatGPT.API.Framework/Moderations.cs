@@ -20,7 +20,7 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// 调用审查API的模型 (免费) (OpenAI Only)
         /// </summary>
-        /// <param name="text">文本</param>
+        /// <param name="texts">文本</param>
         /// <param name="APIUrl">审查模型链接地址</param>
         /// <param name="APIKey">秘钥</param>
         /// <param name="Proxy">协议(可选)</param>

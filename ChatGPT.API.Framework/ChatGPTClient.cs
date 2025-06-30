@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -48,6 +49,9 @@ namespace ChatGPT.API.Framework
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ChatGPTClient"/> class.
+        /// </summary>
         public ChatGPTClient()
         {
         }
@@ -68,10 +72,13 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// a completion for the chat message
         /// </summary>
-        public Dictionary<string, Completions> Completions { get; set; } = new Dictionary<string, Completions>();
+        public ConcurrentDictionary<string, Completions> Completions { get; set; } = new ConcurrentDictionary<string, Completions>();
 
 
 
+        /// <summary>
+        /// Default Completion settings for the ChatGPT client.
+        /// </summary>
         public Completions DefaultCompletion = new()
         {
             model = TestedModel.OpenAI.GPT_4o_mini
@@ -121,7 +128,7 @@ namespace ChatGPT.API.Framework
                 n = DefaultCompletion.n
             };
             cp.messages.Add(new Message() { role = Message.RoleType.system, content = systemmessages });
-            Completions.Add(id, cp);
+            Completions.AddOrUpdate(id, cp, (key, existingValue) => cp);
             return cp;
         }
         /// <summary>
@@ -145,6 +152,7 @@ namespace ChatGPT.API.Framework
             {
                 cp = new Completions()
                 {
+                    messages = DefaultCompletion.messages.ToList(),
                     model = DefaultCompletion.model,
                     user = DefaultCompletion.user == "default" ? id : DefaultCompletion.user,
                     temperature = DefaultCompletion.temperature,
@@ -153,7 +161,7 @@ namespace ChatGPT.API.Framework
                     frequency_penalty = DefaultCompletion.frequency_penalty,
                     n = DefaultCompletion.n
                 };
-                Completions.Add(id, cp);
+                Completions.AddOrUpdate(id, cp, (key, existingValue) => cp);
             }
             var rs = await cp.Ask_async(usermessage, APIUrl, APIKey, Proxy);
             if (rs != null)
@@ -161,12 +169,19 @@ namespace ChatGPT.API.Framework
             return rs;
         }
 
+        /// <summary>
+        /// Sends a user message to ChatGPT and processes the response as a stream.
+        /// </summary>
+        /// <param name="id">The unique identifier for the conversation.</param>
+        /// <param name="usermessage">The message from the user to send to ChatGPT.</param>
+        /// <param name="Response">An action to handle the streamed response from ChatGPT.</param>
         public void Ask_stream(string id, string usermessage, Action<Response_Stream?> Response)
         {
             if (!Completions.TryGetValue(id, out Completions? cp))
             {
                 cp = new Completions()
                 {
+                    messages = DefaultCompletion.messages.ToList(),
                     model = DefaultCompletion.model,
                     user = DefaultCompletion.user == "default" ? id : DefaultCompletion.user,
                     temperature = DefaultCompletion.temperature,
@@ -175,7 +190,7 @@ namespace ChatGPT.API.Framework
                     frequency_penalty = DefaultCompletion.frequency_penalty,
                     n = DefaultCompletion.n
                 };
-                Completions.Add(id, cp);
+                Completions.AddOrUpdate(id, cp, (key, existingValue) => cp);
             }
             cp.Ask_stream(usermessage, APIUrl, APIKey, Response);
         }

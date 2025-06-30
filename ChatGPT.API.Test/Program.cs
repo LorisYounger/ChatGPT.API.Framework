@@ -1,4 +1,5 @@
 ﻿using ChatGPT.API.Framework;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -104,6 +105,13 @@ namespace ChatGPT.API.Test
             bool cannotnext = true;//防止问问题的时候自动退出控制台
             cgc.Ask_stream("def", rl, (x) =>
             {
+                if (x == null)
+                {
+                    Console.WriteLine("\n------\n");
+                    StreamAskLoop(cgc);
+                    cannotnext = false;
+                    return;
+                }
                 if (!string.IsNullOrEmpty(x.GetDeltaContent()))
                 {
                     Console.Write(x.GetDeltaContent());
@@ -111,7 +119,7 @@ namespace ChatGPT.API.Test
                 else if (x.GetDelta()?.finish_reason != null)
                 {
                     Console.WriteLine("\n---" + x.choices[0].delta.finish_reason + "---\n");
-                    AskLoop(cgc);
+                    StreamAskLoop(cgc);
                     cannotnext = false;
                 }
             });
