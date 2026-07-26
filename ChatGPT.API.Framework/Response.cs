@@ -150,6 +150,16 @@ namespace ChatGPT.API.Framework
             public Delta delta { get; set; } = new Delta();
 
             /// <summary>
+            /// The full message associated with the choice (non-stream compatible payload).
+            /// </summary>
+            public Message? message { get; set; }
+
+            /// <summary>
+            /// The reason why the choice was finished.
+            /// </summary>
+            public string? finish_reason { get; set; }
+
+            /// <summary>
             /// Represents the delta information in a choice.
             /// </summary>
             public class Delta
@@ -166,6 +176,11 @@ namespace ChatGPT.API.Framework
                 public string? content { get; set; } = null;
 
                 /// <summary>
+                /// The reasoning content of the delta, only available in the reasoning model.
+                /// </summary>
+                public string? reasoning_content { get; set; } = null;
+
+                /// <summary>
                 /// The reason why the delta was finished.
                 /// </summary>
                 public string? finish_reason = null;
@@ -177,6 +192,19 @@ namespace ChatGPT.API.Framework
         /// </summary>
         /// <returns>The content of the first delta, or null if none exists.</returns>
         public string? GetDeltaContent() => choices.FirstOrDefault()?.delta?.content;
+        /// <summary>
+        /// Gets the content of the first content in the response stream.
+        /// </summary>
+        public string? GetContent() => choices.FirstOrDefault()?.message?.content ?? choices.FirstOrDefault()?.delta?.content;
+        /// <summary>
+        /// Gets the reasoning content of the first delta in the response stream, only available in the reasoning model.
+        /// </summary>
+        public string? GetReasoningContent() => choices.FirstOrDefault()?.message?.reasoning_content ?? choices.FirstOrDefault()?.delta?.reasoning_content;
+
+        /// <summary>
+        /// Gets the finish reason of the first choice in the response stream.
+        /// </summary>
+        public string? GetFinishReason() => choices.FirstOrDefault()?.finish_reason ?? choices.FirstOrDefault()?.delta?.finish_reason;
 
         /// <summary>
         /// Gets the first delta in the response stream.

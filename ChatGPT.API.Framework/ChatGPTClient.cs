@@ -81,7 +81,7 @@ namespace ChatGPT.API.Framework
         /// </summary>
         public Completions DefaultCompletion = new()
         {
-            model = TestedModel.OpenAI.GPT_4o_mini
+            model = TestedModel.OpenAI.GPT_5_6_Luna,
         };
 
         /// <summary>
@@ -117,16 +117,7 @@ namespace ChatGPT.API.Framework
         /// </summary>
         public Completions CreateCompletions(string id, string systemmessages)
         {
-            var cp = new Completions()
-            {
-                model = DefaultCompletion.model,
-                user = DefaultCompletion.user == "default" ? id : DefaultCompletion.user,
-                temperature = DefaultCompletion.temperature,
-                max_tokens = DefaultCompletion.max_tokens,
-                presence_penalty = DefaultCompletion.presence_penalty,
-                frequency_penalty = DefaultCompletion.frequency_penalty,
-                n = DefaultCompletion.n
-            };
+            var cp = DefaultCompletion.Clone();
             cp.messages.Add(new Message() { role = Message.RoleType.system, content = systemmessages });
             Completions.AddOrUpdate(id, cp, (key, existingValue) => cp);
             return cp;
@@ -150,17 +141,7 @@ namespace ChatGPT.API.Framework
         {
             if (!Completions.TryGetValue(id, out Completions? cp))
             {
-                cp = new Completions()
-                {
-                    messages = DefaultCompletion.messages.ToList(),
-                    model = DefaultCompletion.model,
-                    user = DefaultCompletion.user == "default" ? id : DefaultCompletion.user,
-                    temperature = DefaultCompletion.temperature,
-                    max_tokens = DefaultCompletion.max_tokens,
-                    presence_penalty = DefaultCompletion.presence_penalty,
-                    frequency_penalty = DefaultCompletion.frequency_penalty,
-                    n = DefaultCompletion.n
-                };
+                cp = DefaultCompletion.Clone();
                 Completions.AddOrUpdate(id, cp, (key, existingValue) => cp);
             }
             var rs = await cp.Ask_async(usermessage, APIUrl, APIKey, Proxy);
@@ -179,17 +160,7 @@ namespace ChatGPT.API.Framework
         {
             if (!Completions.TryGetValue(id, out Completions? cp))
             {
-                cp = new Completions()
-                {
-                    messages = DefaultCompletion.messages.ToList(),
-                    model = DefaultCompletion.model,
-                    user = DefaultCompletion.user == "default" ? id : DefaultCompletion.user,
-                    temperature = DefaultCompletion.temperature,
-                    max_tokens = DefaultCompletion.max_tokens,
-                    presence_penalty = DefaultCompletion.presence_penalty,
-                    frequency_penalty = DefaultCompletion.frequency_penalty,
-                    n = DefaultCompletion.n
-                };
+                cp = DefaultCompletion.Clone();
                 Completions.AddOrUpdate(id, cp, (key, existingValue) => cp);
             }
             cp.Ask_stream(usermessage, APIUrl, APIKey, Response);

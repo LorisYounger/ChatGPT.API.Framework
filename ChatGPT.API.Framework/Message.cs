@@ -44,5 +44,10 @@ namespace ChatGPT.API.Framework
         /// The content of the message.
         /// </summary>
         public string content = string.Empty;
+#nullable enable
+        /// <summary>
+        /// The reasoning content of the message
+        /// </summary>
+        public string reasoning_content = string.Empty;
     }
 }

@@ -17,12 +17,33 @@ namespace ChatGPT.API.Framework
     /// <summary>
     /// a completion for the chat message
     /// </summary>
-    public class Completions
+    public class Completions : ICloneable
     {
+        /// <summary>
+        /// Settings for the model's thinking behavior.
+        /// </summary>
+        public class Thinking
+        {
+            /// <summary>
+            /// Thinking mode type, e.g. "enabled".
+            /// </summary>
+            public string? type { get; set; } = "enabled";
+        }
+        /// <summary>
+        /// Response format settings for the model's output.
+        /// </summary>
+        public class ResponseFormat
+        {
+            /// <summary>
+            /// Response format type, e.g. "text" or "json_object".
+            /// </summary>
+            public string? type { get; set; } = "text";
+        }
+
         /// <summary>
         /// ID of the model to use.
         /// </summary>
-        public string? model { get; set; } = TestedModel.OpenAI.GPT_4o_mini;
+        public string? model { get; set; } = TestedModel.OpenAI.GPT_5_6_Luna;
         /// <summary>
         /// What sampling temperature to use, between 0 and 2. 
         /// Higher values like 0.8 will make the output more random, 
@@ -35,17 +56,29 @@ namespace ChatGPT.API.Framework
         /// </summary>
         public int? max_tokens { get; set; } = 2048;
         /// <summary>
+        /// Enables or configures model thinking behavior. [enabled, disabled]
+        /// </summary>
+        public Thinking? thinking { get; set; } = new Thinking { type = "disabled" };
+        /// <summary>
+        /// Controls reasoning effort, e.g. "low", "medium", "high".
+        /// </summary>
+        public string? reasoning_effort { get; set; }
+        /// <summary>
+        /// Controls response output format.
+        /// </summary>
+        public ResponseFormat? response_format { get; set; }
+        /// <summary>
         /// Number between -2.0 and 2.0. 
         /// Positive values penalize new tokens based on whether they appear in the text so far
         /// increasing the model's likelihood to talk about new topics.
         /// </summary>
-        public double? presence_penalty { get; set; } = 0;
+        [Obsolete] public double? presence_penalty { get; set; } = 0;
         /// <summary>
         /// Number between -2.0 and 2.0. 
         /// Positive values penalize new tokens based on their existing frequency in the text so far
         /// decreasing the model's likelihood to repeat the same line verbatim
         /// </summary>
-        public double? frequency_penalty { get; set; } = 0;
+        [Obsolete] public double? frequency_penalty { get; set; } = 0;
         /// <summary>
         /// The messages to generate chat completions for
         /// </summary>
@@ -128,6 +161,7 @@ namespace ChatGPT.API.Framework
                                 if (string.IsNullOrEmpty(rs?.choices.FirstOrDefault()?.delta?.content) == false)
                                 {
                                     FakeMessage.content += rs.choices.FirstOrDefault().delta.content;
+                                    FakeMessage.reasoning_content += rs.choices.FirstOrDefault().delta.reasoning_content ?? "";
 #pragma warning restore CS8629,CS8602 // 可为 null 的值类型可为 null。
                                 }
                             }
@@ -169,6 +203,33 @@ namespace ChatGPT.API.Framework
         {
             messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
             GetResponse_stream(APIUrl, APIKey, Response, Proxy);
-        }
+        }
+        /// <summary>
+        /// Clones the current Completions instance, creating a new instance with the same property values.
+        /// </summary>
+        public Completions Clone()
+        {
+#pragma warning disable CS0612 // 类型或成员已过时
+            return new Completions
+            {
+                model = model,
+                temperature = temperature,
+                max_tokens = max_tokens,
+                thinking = thinking == null ? null : new Thinking { type = thinking.type },
+                reasoning_effort = reasoning_effort,
+                response_format = response_format == null ? null : new ResponseFormat { type = response_format.type },
+                presence_penalty = presence_penalty,
+                frequency_penalty = frequency_penalty,
+                messages = messages.Select(x => new Message { role = x.role, content = x.content }).ToList(),
+                n = n,
+                user = user,
+            };
+#pragma warning restore CS0612 // 类型或成员已过时
+        }
+
+        object ICloneable.Clone()
+        {
+            return Clone();
+        }
     }
 }
