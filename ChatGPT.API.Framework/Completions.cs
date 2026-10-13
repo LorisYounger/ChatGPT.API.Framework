@@ -123,55 +123,56 @@ namespace ChatGPT.API.Framework
         /// <summary>
         /// Get Response by Stream
         /// </summary>
-        public async void GetResponse_stream(string APIUrl, string APIKey, Action<Response_Stream?> Response, HttpMessageHandler? Proxy = null)
+        public void GetResponse_stream(string APIUrl, string APIKey, Action<Response_Stream?> Response, HttpMessageHandler? Proxy = null)
+            => GetResponse_stream_async(APIUrl, APIKey, Response, Proxy).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Get Response by Stream. Await this task to observe completion and exceptions.
+        /// </summary>
+        public async Task GetResponse_stream_async(string APIUrl, string APIKey, Action<Response_Stream?> Response, HttpMessageHandler? Proxy = null)
         {
             this.stream = true;
             Message FakeMessage = new Message() { role = Message.RoleType.assistant, content = "" };
-            using (var httpClient = Proxy == null ? new HttpClient() : new HttpClient(Proxy))
+            using (var httpClient = Proxy == null ? new HttpClient() : new HttpClient(Proxy, disposeHandler: false))
             {
                 httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + APIKey);
-                var content = new StringContent(JsonConvert.SerializeObject(this, ChatGPTClient.JsonSerializerSettings), Encoding.UTF8, "application/json");
-                var response = await httpClient.PostAsync(APIUrl, content);
-                if (response.IsSuccessStatusCode)
+                using var request = new HttpRequestMessage(HttpMethod.Post, APIUrl)
                 {
-                    using (Stream stream = await response.Content.ReadAsStreamAsync())
+                    Content = new StringContent(JsonConvert.SerializeObject(this, ChatGPTClient.JsonSerializerSettings), Encoding.UTF8, "application/json")
+                };
+                using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+                using (Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                {
+                    using (StreamReader reader = new StreamReader(stream))
                     {
-                        using (StreamReader reader = new StreamReader(stream))
+                        string? responseString;
+                        while ((responseString = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                         {
-                            while (!reader.EndOfStream)
+                            if (responseString.StartsWith("data: "))
+                                responseString = responseString.Substring(6);
+                            if (string.IsNullOrEmpty(responseString))
                             {
-                                string? responseString = await reader.ReadLineAsync();
-                                if (responseString == null)
-                                    continue;
-                                if (responseString.StartsWith("data: "))
-                                    responseString = responseString.Substring(6);
-                                if (string.IsNullOrEmpty(responseString))
-                                {
-                                    continue;
-                                }
-                                if (responseString == "[DONE]")
-                                    break;
-                                var rs = JsonConvert.DeserializeObject<Response_Stream>(responseString);
-                                Response(rs);
-                                if (rs?.choices.FirstOrDefault()?.delta?.role != null)
-                                {
-#pragma warning disable CS8629,CS8602 // 可为 null 的值类型可为 null。
-                                    FakeMessage.role = rs.choices.FirstOrDefault().delta.role.Value;
-                                }
-                                if (string.IsNullOrEmpty(rs?.choices.FirstOrDefault()?.delta?.content) == false)
-                                {
-                                    FakeMessage.content += rs.choices.FirstOrDefault().delta.content;
-                                    FakeMessage.reasoning_content += rs.choices.FirstOrDefault().delta.reasoning_content ?? "";
-#pragma warning restore CS8629,CS8602 // 可为 null 的值类型可为 null。
-                                }
+                                continue;
                             }
-                            Response(null);
+                            if (responseString == "[DONE]")
+                                break;
+                            var rs = JsonConvert.DeserializeObject<Response_Stream>(responseString);
+                            Response(rs);
+                            if (rs?.choices.FirstOrDefault()?.delta?.role != null)
+                            {
+#pragma warning disable CS8629,CS8602 // 可为 null 的值类型可为 null。
+                                FakeMessage.role = rs.choices.FirstOrDefault().delta.role.Value;
+                            }
+                            if (string.IsNullOrEmpty(rs?.choices.FirstOrDefault()?.delta?.content) == false)
+                            {
+                                FakeMessage.content += rs.choices.FirstOrDefault().delta.content;
+                                FakeMessage.reasoning_content += rs.choices.FirstOrDefault().delta.reasoning_content ?? "";
+#pragma warning restore CS8629,CS8602 // 可为 null 的值类型可为 null。
+                            }
                         }
+                        Response(null);
                     }
-                }
-                else
-                {
-                    throw new Exception("Error: " + response.ReasonPhrase);
                 }
                 messages.Add(FakeMessage);
             }
@@ -200,9 +201,15 @@ namespace ChatGPT.API.Framework
         /// <param name="Response">An action to handle the streamed response.</param>
         /// <param name="Proxy">Optional HTTP message handler for proxy configuration.</param>
         public void Ask_stream(string usermessage, string APIUrl, string APIKey, Action<Response_Stream?> Response, HttpMessageHandler? Proxy = null)
+            => Ask_stream_async(usermessage, APIUrl, APIKey, Response, Proxy).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Sends a user message and returns a task for the entire response stream.
+        /// </summary>
+        public Task Ask_stream_async(string usermessage, string APIUrl, string APIKey, Action<Response_Stream?> Response, HttpMessageHandler? Proxy = null)
         {
             messages.Add(new Message() { role = Message.RoleType.user, content = usermessage });
-            GetResponse_stream(APIUrl, APIKey, Response, Proxy);
+            return GetResponse_stream_async(APIUrl, APIKey, Response, Proxy);
         }
         /// <summary>
         /// Clones the current Completions instance, creating a new instance with the same property values.

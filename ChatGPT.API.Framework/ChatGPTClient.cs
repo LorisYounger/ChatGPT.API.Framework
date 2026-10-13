@@ -157,13 +157,19 @@ namespace ChatGPT.API.Framework
         /// <param name="usermessage">The message from the user to send to ChatGPT.</param>
         /// <param name="Response">An action to handle the streamed response from ChatGPT.</param>
         public void Ask_stream(string id, string usermessage, Action<Response_Stream?> Response)
+            => Ask_stream_async(id, usermessage, Response).GetAwaiter().GetResult();
+
+        /// <summary>
+        /// Sends a user message and returns a task for the entire response stream.
+        /// </summary>
+        public Task Ask_stream_async(string id, string usermessage, Action<Response_Stream?> Response)
         {
             if (!Completions.TryGetValue(id, out Completions? cp))
             {
                 cp = DefaultCompletion.Clone();
                 Completions.AddOrUpdate(id, cp, (key, existingValue) => cp);
             }
-            cp.Ask_stream(usermessage, APIUrl, APIKey, Response);
+            return cp.Ask_stream_async(usermessage, APIUrl, APIKey, Response, Proxy);
         }
 
         /// <summary>
